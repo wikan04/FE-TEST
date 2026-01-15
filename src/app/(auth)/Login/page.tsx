@@ -6,6 +6,7 @@ import { Button, Input } from "@/components/ui";
 import { authApi } from "@/lib/api";
 import { useAuthStore } from "@/store/authStore";
 import { Eye, EyeOff, Lock, User } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,7 +22,6 @@ export default function LoginPage() {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [loginError, setLoginError] = useState("");
 
   const validateForm = () => {
     const newErrors = {
@@ -29,12 +29,16 @@ export default function LoginPage() {
       password: "",
     };
 
-    if (!formData.username) {
+    if (!formData.username.trim()) {
       newErrors.username = "Username wajib diisi";
+    } else if (formData.username.length < 3) {
+      newErrors.username = "Username minimal 3 karakter";
     }
 
     if (!formData.password) {
       newErrors.password = "Password wajib diisi";
+    } else if (formData.password.length < 3) {
+      newErrors.password = "Password minimal 3 karakter";
     }
 
     setErrors(newErrors);
@@ -43,13 +47,14 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoginError("");
 
     if (!validateForm()) {
+      toast.error("Mohon lengkapi form dengan benar");
       return;
     }
 
     setIsLoading(true);
+    const loadingToast = toast.loading("Memproses login...");
 
     try {
       const response = await authApi.login(formData);
@@ -58,31 +63,41 @@ export default function LoginPage() {
         // Save auth data
         setAuth(response.access_token, formData.username);
 
-        // Redirect to dashboard
-        router.push("/dashboard");
+        toast.success("Login berhasil! Selamat datang.", { id: loadingToast });
+
+        // Small delay for better UX
+        setTimeout(() => {
+          router.push("/dashboard");
+        }, 500);
       } else {
-        setLoginError("Login gagal. Silakan coba lagi.");
+        toast.error("Login gagal. Silakan coba lagi.", { id: loadingToast });
       }
     } catch (error: any) {
       console.error("Login error:", error);
 
+      let errorMessage = "Terjadi kesalahan. Silakan coba lagi.";
+
       if (error.response?.status === 401) {
-        setLoginError("Username atau password salah");
-      } else {
-        setLoginError("Terjadi kesalahan. Silakan coba lagi.");
+        errorMessage = "Username atau password salah";
+      } else if (error.response?.status === 422) {
+        errorMessage = "Data yang dimasukkan tidak valid";
+      } else if (error.message === "Network Error") {
+        errorMessage = "Tidak dapat terhubung ke server";
       }
+
+      toast.error(errorMessage, { id: loadingToast });
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-md">
+    <div className="w-full max-w-md animate-fadeIn">
       <div className="mb-8 text-center">
         {/* Logo Placeholder */}
         <div className="mb-6 flex justify-center">
-          <div className="w-32 h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-            <span className="text-gray-500 font-semibold">App Logo</span>
+          <div className="w-32 h-32 bg-gradient-to-br from-blue-500 to-blue-700 rounded-lg flex items-center justify-center shadow-lg">
+            <span className="text-white font-bold text-xl">JM GIS</span>
           </div>
         </div>
 
@@ -93,22 +108,16 @@ export default function LoginPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Global Error Message */}
-        {loginError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-            {loginError}
-          </div>
-        )}
-
         {/* Username Input */}
         <Input
           label="Username"
           type="text"
           placeholder="Masukkan username"
           value={formData.username}
-          onChange={(e) =>
-            setFormData({ ...formData, username: e.target.value })
-          }
+          onChange={(e) => {
+            setFormData({ ...formData, username: e.target.value });
+            if (errors.username) setErrors({ ...errors, username: "" });
+          }}
           error={errors.username}
           leftIcon={<User className="h-5 w-5 text-gray-400" />}
           disabled={isLoading}
@@ -120,9 +129,10 @@ export default function LoginPage() {
           type={showPassword ? "text" : "password"}
           placeholder="Masukkan password"
           value={formData.password}
-          onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
-          }
+          onChange={(e) => {
+            setFormData({ ...formData, password: e.target.value });
+            if (errors.password) setErrors({ ...errors, password: "" });
+          }}
           error={errors.password}
           leftIcon={<Lock className="h-5 w-5 text-gray-400" />}
           rightIcon={
@@ -130,6 +140,7 @@ export default function LoginPage() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               className="text-gray-400 hover:text-gray-600"
+              tabIndex={-1}
             >
               {showPassword ? (
                 <EyeOff className="h-5 w-5" />

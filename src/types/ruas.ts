@@ -11,7 +11,7 @@ export interface Ruas {
   id: number;
   unit_id: number;
   ruas_name: string;
-  long: number;
+  long: string;
   km_awal: string;
   km_akhir: string;
   photo_url: string | null;
@@ -60,7 +60,7 @@ export interface RuasDetailResponse {
 export interface RuasFormData {
   unit_id: number;
   ruas_name: string;
-  long: number;
+  long: string;
   km_awal: string;
   km_akhir: string;
   status: string;

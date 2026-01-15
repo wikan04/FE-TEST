@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { LogOut, Menu, User, X } from "lucide-react";
+import { LogOut, User } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import { authApi } from "@/lib/api";
-import { Button } from "@/components/ui";
+import toast from "react-hot-toast";
 
 export const Navbar = () => {
   const pathname = usePathname();
@@ -24,26 +25,36 @@ export const Navbar = () => {
     setIsLoggingOut(true);
     try {
       await authApi.logout();
-    } catch (error) {
-      console.error("Logout error:", error);
-    } finally {
+      toast.success("Logout berhasil!");
       clearAuth();
       router.push("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Gagal logout. Silakan coba lagi.");
+      clearAuth();
+      router.push("/login");
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
   return (
-    <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <div className="w-24 h-10 bg-gray-200 rounded flex items-center justify-center">
-                <span className="text-xs font-semibold text-gray-600">
-                  App Logo
-                </span>
-              </div>
+              <Link href="/dashboard" className="flex items-center gap-2">
+                {/* Pakai logo real atau SVG placeholder */}
+                <Image
+                  src="/logo-jasamarga.png"
+                  alt="JM GIS Logo"
+                  width={100}
+                  height={32}
+                  priority
+                />
+              </Link>
             </div>
 
             {/* Navigation Links - Desktop */}
@@ -77,8 +88,8 @@ export const Navbar = () => {
                 onClick={() => setShowUserMenu(!showUserMenu)}
                 className="flex items-center gap-2 px-3 py-2 rounded-md hover:bg-gray-100 transition-colors"
               >
-                <div className="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                  <User className="h-5 w-5 text-gray-600" />
+                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center">
+                  <User className="h-5 w-5 text-white" />
                 </div>
                 <span className="hidden sm:block text-sm font-medium text-gray-700">
                   {username}
@@ -95,7 +106,7 @@ export const Navbar = () => {
                   />
 
                   {/* Menu */}
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-20 border animate-fadeIn">
                     <div className="px-4 py-2 border-b">
                       <p className="text-sm font-medium text-gray-900">
                         {username}
@@ -105,7 +116,7 @@ export const Navbar = () => {
                     <button
                       onClick={handleLogout}
                       disabled={isLoggingOut}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+                      className="w-full text-left px-4 py-2 text-sm text-red-700 hover:bg-red-50 flex items-center gap-2 disabled:opacity-50 transition-colors"
                     >
                       <LogOut className="h-4 w-4" />
                       {isLoggingOut ? "Logging out..." : "Logout"}
@@ -114,15 +125,8 @@ export const Navbar = () => {
                 </>
               )}
             </div>
-
-            {/* Hamburger Menu Icon - Mobile */}
-            <button className="md:hidden p-2 rounded-md text-gray-700 hover:bg-gray-100">
-              <Menu className="h-6 w-6" />
-            </button>
           </div>
         </div>
-
-        {/* Mobile Navigation - bisa dikembangkan nanti */}
       </div>
     </nav>
   );
