@@ -151,16 +151,6 @@ export default function LoginPage() {
         >
           Login
         </Button>
-
-        {/* Info */}
-        <div className="text-center text-sm text-gray-500">
-          <p>
-            Username: <span className="font-medium">admin</span>
-          </p>
-          <p>
-            Password: <span className="font-medium">123</span>
-          </p>
-        </div>
       </form>
     </div>
   );
